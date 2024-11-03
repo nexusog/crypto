@@ -14,7 +14,9 @@
 		"prepare": "husky",
 		"format": "prettier --write \"./**/*.ts\"",
 		"lint": "tsc",
-		"release": "pnpm run build && changeset publish"
+		"bump": "pnpm changeset",
+		"cs:version": "pnpm changeset version",
+		"cs:publish": "pnpm run build && changeset publish"
 	},
 	"keywords": [
 		"crypto"
@@ -23,6 +25,7 @@
 		"dist",
 		"src",
 		"package.json",
+		"LICENSE",
 		"README.md"
 	],
 	"author": "Henil Malaviya <henilm.dev@gmail.com>",
