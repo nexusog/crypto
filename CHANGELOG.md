@@ -1,5 +1,11 @@
 # @nexusog/crypto
 
+## 0.1.1
+
+### Patch Changes
+
+-   6da061c: Support for CommonJS
+
 ## 0.1.0
 
 ### Minor Changes
