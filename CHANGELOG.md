@@ -1,5 +1,11 @@
 # @nexusog/crypto
 
+## 0.1.3
+
+### Patch Changes
+
+-   CI: no publish automation
+
 ## 0.1.2
 
 ### Patch Changes
