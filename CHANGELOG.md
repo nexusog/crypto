@@ -1,5 +1,11 @@
 # @nexusog/crypto
 
+## 0.1.2
+
+### Patch Changes
+
+-   60c5754: Fix module import path
+
 ## 0.1.1
 
 ### Patch Changes
