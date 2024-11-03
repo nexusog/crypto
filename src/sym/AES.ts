@@ -45,9 +45,66 @@ function encryptFromStringToString(
 	return iv + cipher.output.bytes()
 }
 
+function encryptFromStringToUint8Array(
+	data: string,
+	key: string,
+	options?: Partial<EncryptOptions>,
+) {
+	return utils.stringToUint8Array(
+		encryptFromStringToString(data, key, options),
+	)
+}
+
+function encryptFromStringToHex(
+	data: string,
+	key: string,
+	options?: Partial<EncryptOptions>,
+) {
+	return utils.stringToHex(encryptFromStringToString(data, key, options))
+}
+
+function encryptFromUint8ArrayToString(
+	data: Uint8Array,
+	key: string,
+	options?: Partial<EncryptOptions>,
+) {
+	return encryptFromStringToString(
+		utils.uint8ArrayToString(data),
+		key,
+		options,
+	)
+}
+
+function encryptFromUint8ArrayToUint8Array(
+	data: Uint8Array,
+	key: string,
+	options?: Partial<EncryptOptions>,
+) {
+	return encryptFromStringToUint8Array(
+		utils.uint8ArrayToString(data),
+		key,
+		options,
+	)
+}
+
+function encryptFromUint8ArrayToHex(
+	data: Uint8Array,
+	key: string,
+	options?: Partial<EncryptOptions>,
+) {
+	return encryptFromStringToHex(utils.uint8ArrayToString(data), key, options)
+}
+
 const encrypt = {
 	fromString: {
 		toString: encryptFromStringToString,
+		toUint8Array: encryptFromStringToUint8Array,
+		toHex: encryptFromStringToHex,
+	},
+	fromUint8Array: {
+		toString: encryptFromUint8ArrayToString,
+		toUint8Array: encryptFromUint8ArrayToUint8Array,
+		toHex: encryptFromUint8ArrayToHex,
 	},
 }
 
