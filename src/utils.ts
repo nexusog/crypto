@@ -8,8 +8,9 @@ function uint8ArrayToString(uint8Array: Uint8Array, max?: number): string {
 	return new TextDecoder().decode(uint8Array).slice(0, max)
 }
 
+// returns a random string of the specified length in hex format
 function getRandomString(bytes: number) {
-	return forge.random.getBytesSync(bytes)
+	return stringToHex(forge.random.getBytesSync(bytes)).slice(0, bytes)
 }
 
 function getRandomUint8Array(bytes: number) {

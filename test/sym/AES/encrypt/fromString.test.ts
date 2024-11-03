@@ -15,8 +15,11 @@ describe('AES.encrypt.fromString.toString', () => {
 		)
 
 		expect(encrypted).toBeDefined()
-		expect(encrypted).toBeTypeOf('string')
-		expect(encrypted.length).toBeGreaterThanOrEqual(ivBytes + data.length)
+		expect(encrypted).toBeTypeOf('object')
+		expect(encrypted.data).toBeDefined()
+		expect(encrypted.iv).toBeDefined()
+		expect(encrypted.tag).toBeDefined()
+		expect(encrypted.data.length).toBeGreaterThanOrEqual(data.length)
 	})
 
 	it('should return encrypted data with default ivBytes', () => {
@@ -25,9 +28,7 @@ describe('AES.encrypt.fromString.toString', () => {
 		const encrypted = NexusCrypto.AES.encrypt.fromString.toString(data, key)
 
 		expect(encrypted).toBeDefined()
-		expect(encrypted.length).toBeGreaterThanOrEqual(
-			NexusCrypto.AES.DEFAULT_IV_BYTES + data.length,
-		)
+		expect(encrypted.data.length).toBeGreaterThanOrEqual(data.length)
 	})
 
 	it('should return encrypted data with custom algorithm', () => {
@@ -45,7 +46,7 @@ describe('AES.encrypt.fromString.toString', () => {
 		)
 
 		expect(encrypted).toBeDefined()
-		expect(encrypted.length).toBeGreaterThanOrEqual(ivBytes + data.length)
+		expect(encrypted.data.length).toBeGreaterThanOrEqual(data.length)
 	})
 
 	it('should handle large data', () => {
@@ -54,12 +55,8 @@ describe('AES.encrypt.fromString.toString', () => {
 		const encrypted = NexusCrypto.AES.encrypt.fromString.toString(data, key)
 
 		expect(encrypted).toBeDefined()
-		expect(encrypted.length).toBeGreaterThanOrEqual(
-			NexusCrypto.AES.DEFAULT_IV_BYTES + data.length,
-		)
+		expect(encrypted.data.length).toBeGreaterThanOrEqual(data.length)
 	})
-
-	it('should ')
 })
 
 describe('AES.encrypt.fromString.toUint8Array', () => {
@@ -72,10 +69,10 @@ describe('AES.encrypt.fromString.toUint8Array', () => {
 		)
 
 		expect(encrypted).toBeDefined()
-		expect(encrypted).toBeInstanceOf(Uint8Array)
-		expect(encrypted.length).toBeGreaterThanOrEqual(
-			NexusCrypto.AES.DEFAULT_IV_BYTES + data.length,
-		)
+		expect(encrypted.iv).toBeInstanceOf(Uint8Array)
+		expect(encrypted.tag).toBeInstanceOf(Uint8Array)
+		expect(encrypted.data).toBeInstanceOf(Uint8Array)
+		expect(encrypted.data.length).toBeGreaterThanOrEqual(data.length)
 	})
 })
 
@@ -86,9 +83,9 @@ describe('AES.encrypt.fromString.toHex', () => {
 		const encrypted = NexusCrypto.AES.encrypt.fromString.toHex(data, key)
 
 		expect(encrypted).toBeDefined()
-		expect(encrypted).toBeTypeOf('string')
-		expect(encrypted.length).toBeGreaterThanOrEqual(
-			(NexusCrypto.AES.DEFAULT_IV_BYTES + data.length) * 2,
-		)
+		expect(encrypted.iv).toBeTypeOf('string')
+		expect(encrypted.tag).toBeTypeOf('string')
+		expect(encrypted.data).toBeTypeOf('string')
+		expect(encrypted.data.length).toBeGreaterThanOrEqual(data.length * 2)
 	})
 })

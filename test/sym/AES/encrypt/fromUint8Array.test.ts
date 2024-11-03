@@ -11,9 +11,7 @@ describe('AES.encrypt.fromUint8Array', () => {
 		)
 
 		expect(encrypted).toBeDefined()
-		expect(encrypted.length).toBeGreaterThanOrEqual(
-			NexusCrypto.AES.DEFAULT_IV_BYTES + data.length,
-		)
+		expect(encrypted.data.length).toBeGreaterThanOrEqual(data.length)
 	})
 })
 
@@ -27,10 +25,8 @@ describe('AES.encrypt.fromUint8Array.toUint8Array', () => {
 		)
 
 		expect(encrypted).toBeDefined()
-		expect(encrypted).toBeInstanceOf(Uint8Array)
-		expect(encrypted.length).toBeGreaterThanOrEqual(
-			NexusCrypto.AES.DEFAULT_IV_BYTES + data.length,
-		)
+		expect(encrypted.data).toBeInstanceOf(Uint8Array)
+		expect(encrypted.data.length).toBeGreaterThanOrEqual(data.length)
 	})
 })
 
@@ -44,9 +40,7 @@ describe('AES.encrypt.fromUint8Array.toHex', () => {
 		)
 
 		expect(encrypted).toBeDefined()
-		expect(encrypted).toBeTypeOf('string')
-		expect(encrypted.length).toBeGreaterThanOrEqual(
-			(NexusCrypto.AES.DEFAULT_IV_BYTES + data.length) * 2,
-		)
+		expect(encrypted.data).toBeTypeOf('string')
+		expect(encrypted.data.length).toBeGreaterThanOrEqual(data.length * 2)
 	})
 })
