@@ -13,7 +13,8 @@
 		"test:watch": "vitest --watch",
 		"prepare": "husky",
 		"format": "prettier --write \"src/**/*.ts\"",
-		"lint": "tsc"
+		"lint": "tsc",
+		"release": "pnpm run build && changeset publish"
 	},
 	"keywords": [
 		"crypto"
