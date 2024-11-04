@@ -16,6 +16,7 @@
 		"lint": "tsc",
 		"bump": "pnpm changeset",
 		"cs:version": "pnpm changeset version",
+		"cs:version:snapshot": "pnpm changeset version --snapshot next",
 		"cs:publish": "pnpm run build && changeset publish"
 	},
 	"keywords": [
