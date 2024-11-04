@@ -4,7 +4,7 @@ import NexusCrypto from '@/index'
 describe('AES.encrypt.fromUint8Array', () => {
 	it('should return encrypted data', () => {
 		const data = new Array(16).fill('A').join('')
-		const key = NexusCrypto.utils.getRandomString(32)
+		const key = NexusCrypto.utils.getRandomUint8Array(32)
 		const encrypted = NexusCrypto.AES.encrypt.fromUint8Array.toString(
 			NexusCrypto.utils.stringToUint8Array(data),
 			key,
@@ -18,7 +18,7 @@ describe('AES.encrypt.fromUint8Array', () => {
 describe('AES.encrypt.fromUint8Array.toUint8Array', () => {
 	it('should return encrypted data', () => {
 		const data = new Array(16).fill('A').join('')
-		const key = NexusCrypto.utils.getRandomString(32)
+		const key = NexusCrypto.utils.getRandomUint8Array(32)
 		const encrypted = NexusCrypto.AES.encrypt.fromUint8Array.toUint8Array(
 			NexusCrypto.utils.stringToUint8Array(data),
 			key,
@@ -33,7 +33,7 @@ describe('AES.encrypt.fromUint8Array.toUint8Array', () => {
 describe('AES.encrypt.fromUint8Array.toHex', () => {
 	it('should return encrypted data', () => {
 		const data = new Array(16).fill('A').join('')
-		const key = NexusCrypto.utils.getRandomString(32)
+		const key = NexusCrypto.utils.getRandomUint8Array(32)
 		const encrypted = NexusCrypto.AES.encrypt.fromUint8Array.toHex(
 			NexusCrypto.utils.stringToUint8Array(data),
 			key,

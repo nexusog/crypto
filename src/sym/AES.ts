@@ -94,34 +94,38 @@ function encryptFromStringToHex(
 
 function encryptFromUint8ArrayToString(
 	data: Uint8Array,
-	key: string,
+	key: Uint8Array,
 	options?: Partial<EncryptOptions>,
 ) {
 	return encryptFromStringToString(
 		utils.uint8ArrayToString(data),
-		key,
+		utils.uint8ArrayToString(key),
 		options,
 	)
 }
 
 function encryptFromUint8ArrayToUint8Array(
 	data: Uint8Array,
-	key: string,
+	key: Uint8Array,
 	options?: Partial<EncryptOptions>,
 ) {
 	return encryptFromStringToUint8Array(
 		utils.uint8ArrayToString(data),
-		key,
+		utils.uint8ArrayToString(key),
 		options,
 	)
 }
 
 function encryptFromUint8ArrayToHex(
 	data: Uint8Array,
-	key: string,
+	key: Uint8Array,
 	options?: Partial<EncryptOptions>,
 ) {
-	return encryptFromStringToHex(utils.uint8ArrayToString(data), key, options)
+	return encryptFromStringToHex(
+		utils.uint8ArrayToString(data),
+		utils.uint8ArrayToString(key),
+		options,
+	)
 }
 
 const encrypt = {
@@ -192,48 +196,48 @@ function decryptFromStringToHex(
 
 function decryptFromUint8ArrayToString(
 	data: Uint8Array,
-	key: string,
-	iv: string,
-	tag: string,
+	key: Uint8Array,
+	iv: Uint8Array,
+	tag: Uint8Array,
 	options?: Partial<DecryptOptions>,
 ) {
 	return decryptFromStringToString(
 		utils.uint8ArrayToString(data),
-		key,
-		iv,
-		tag,
+		utils.uint8ArrayToString(key),
+		utils.uint8ArrayToString(iv),
+		utils.uint8ArrayToString(tag),
 		options,
 	)
 }
 
 function decryptFromUint8ArrayToUint8Array(
 	data: Uint8Array,
-	key: string,
-	iv: string,
-	tag: string,
+	key: Uint8Array,
+	iv: Uint8Array,
+	tag: Uint8Array,
 	options?: Partial<DecryptOptions>,
 ) {
 	return decryptFromStringToUint8Array(
 		utils.uint8ArrayToString(data),
-		key,
-		iv,
-		tag,
+		utils.uint8ArrayToString(key),
+		utils.uint8ArrayToString(iv),
+		utils.uint8ArrayToString(tag),
 		options,
 	)
 }
 
 function decryptFromUint8ArrayToHex(
 	data: Uint8Array,
-	key: string,
-	iv: string,
-	tag: string,
+	key: Uint8Array,
+	iv: Uint8Array,
+	tag: Uint8Array,
 	options?: Partial<DecryptOptions>,
 ) {
 	return decryptFromStringToHex(
 		utils.uint8ArrayToString(data),
-		key,
-		iv,
-		tag,
+		utils.uint8ArrayToString(key),
+		utils.uint8ArrayToString(iv),
+		utils.uint8ArrayToString(tag),
 		options,
 	)
 }
