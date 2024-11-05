@@ -1,7 +1,7 @@
 {
 	"private": false,
 	"name": "@nexusog/crypto",
-	"version": "0.2.0",
+	"version": "0.3.0",
 	"description": "Browser & Natively supported cryptography methods",
 	"type": "module",
 	"main": "dist/index.js",
