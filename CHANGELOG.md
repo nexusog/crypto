@@ -1,5 +1,12 @@
 # @nexusog/crypto
 
+## 0.3.0
+
+### Minor Changes
+
+-   1724b08: RSA encryption methods
+-   e334165: RSA decrypt, sign & verifySign methods
+
 ## 0.2.0
 
 ### Minor Changes
