@@ -1,53 +1,71 @@
-import { utils } from '@/utils'
-import forge from 'node-forge'
+import forge, { Base64, Hex, Utf8 } from 'node-forge'
 
 function createInstance() {
 	return forge.md.sha256.create()
 }
 
-function digest(data: string) {
-	return createInstance().update(data, 'utf8').digest()
+type InputEncoding = 'utf8' | 'base64' | 'hex'
+type OutputEncoding = 'base64' | 'hex'
+
+type HashInput = Base64 | Hex | Utf8
+type HashOutput = Base64 | Hex
+
+interface HashOptions<
+	IE extends InputEncoding = InputEncoding,
+	OE extends OutputEncoding = OutputEncoding,
+> {
+	inputEncoding: IE
+	outputEncoding: OE
 }
 
-function fromStringToHex(data: string): string {
-	return digest(data).toHex()
-}
+// Overloads for the `hash` function to provide type-safe return values based on output encoding
+function hash(data: HashInput): string
+function hash(
+	data: string,
+	options: Partial<HashOptions<InputEncoding, 'base64'>>,
+): Base64
+function hash(data: HashInput, options: HashOptions<InputEncoding, 'hex'>): Hex
 
-function fromStringToString(data: string): string {
-	return digest(data).bytes()
-}
+function hash(data: HashInput, options?: Partial<HashOptions>): HashOutput
 
-function fromStringToUint8Array(data: string): Uint8Array {
-	return utils.stringToUint8Array(fromStringToString(data))
-}
+function hash(data: HashInput, options: Partial<HashOptions> = {}): HashOutput {
+	const { inputEncoding = 'utf8', outputEncoding = 'hex' } = options
 
-const fromString = {
-	toHex: fromStringToHex,
-	toString: fromStringToString,
-	toUint8Array: fromStringToUint8Array,
-}
+	const md = createInstance()
 
-function fromUint8ArrayToHex(data: Uint8Array): string {
-	return fromStringToHex(utils.uint8ArrayToString(data))
-}
+	if (typeof data !== 'string') {
+		throw new Error('Invalid input: data should be a string')
+	}
 
-function fromUint8ArrayToString(data: Uint8Array): string {
-	return fromStringToString(utils.uint8ArrayToString(data))
-}
+	// Update the hash instance with data based on input encoding
+	switch (inputEncoding) {
+		case 'utf8':
+			md.update(forge.util.decodeUtf8(data), 'raw')
+			break
+		case 'hex':
+			md.update(forge.util.hexToBytes(data))
+			break
+		case 'base64':
+			md.update(forge.util.decode64(data))
+			break
+		default:
+			throw new Error(`Unsupported input encoding: ${inputEncoding}`)
+	}
 
-function fromUint8ArrayToUint8Array(data: Uint8Array): Uint8Array {
-	return fromStringToUint8Array(utils.uint8ArrayToString(data))
-}
+	// Generate the hash and convert it to the desired output encoding
+	const output = md.digest().getBytes()
 
-const fromUint8Array = {
-	toHex: fromUint8ArrayToHex,
-	toString: fromUint8ArrayToString,
-	toUint8Array: fromUint8ArrayToUint8Array,
+	switch (outputEncoding) {
+		case 'hex':
+			return forge.util.bytesToHex(output)
+		case 'base64':
+			return forge.util.encode64(output)
+		default:
+			throw new Error(`Unsupported output encoding: ${outputEncoding}`)
+	}
 }
 
 export const SHA256 = {
 	createInstance,
-	digest,
-	fromString,
-	fromUint8Array,
+	hash,
 }

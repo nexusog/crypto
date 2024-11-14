@@ -1,267 +1,186 @@
 import { utils } from '@/utils'
-import forge from 'node-forge'
+import forge, { Base64, Hex, Utf8 } from 'node-forge'
 
-const DEFAULT_IV_BYTES: number = 16
-const DEFAULT_TAG_BYTES: number = 16
-const DEFAULT_ALGORITHM: forge.cipher.Algorithm = 'AES-GCM'
+// Default configurations for encryption
+const DEFAULT_IV_SIZE = 16
+const DEFAULT_TAG_SIZE = 16
+const DEFAULT_ENCRYPTION_ALGORITHM: forge.cipher.Algorithm = 'AES-GCM'
 
-type Options = {
-	ivBytes?: number
-	tagBytes?: number
-	algorithm?: forge.cipher.Algorithm
+// Encoding Types
+type Utf8Encoding = 'utf8'
+type Base64Encoding = 'base64'
+type HexEncoding = 'hex'
+
+// Consolidated Encoding Type Aliases
+type InputEncoding = Utf8Encoding | Base64Encoding | HexEncoding
+type OutputEncoding = Base64Encoding | HexEncoding
+type DecryptionInputEncoding = OutputEncoding
+type DecryptionOutputEncoding = Utf8Encoding | Base64Encoding | HexEncoding
+
+// Encryption Key Type
+type EncryptionKey = Utf8
+
+// Separate options for Encryption and Decryption
+type EncryptionOptions = {
+	inputEncoding?: InputEncoding
+	outputEncoding?: OutputEncoding
 }
 
-export type EncryptOptions = Options
-
-export type DecryptOptions = Omit<Options, 'ivBytes' | 'tagBytes'>
-
-function generateIv(bytes = DEFAULT_IV_BYTES): Uint8Array {
-	return utils.getRandomUint8Array(bytes)
-}
-function generateIvString(bytes = DEFAULT_IV_BYTES): string {
-	return utils.getRandomString(bytes)
+type DecryptionOptions = {
+	inputEncoding?: DecryptionInputEncoding
+	outputEncoding?: DecryptionOutputEncoding
 }
 
-function createCipher(key: string, algorithm = DEFAULT_ALGORITHM) {
+// Initialize AES cipher for encryption
+function initializeCipher(key: Utf8, algorithm = DEFAULT_ENCRYPTION_ALGORITHM) {
 	return forge.cipher.createCipher(algorithm, key)
 }
 
-function createDecipher(key: string, algorithm = DEFAULT_ALGORITHM) {
+// Initialize AES decipher for decryption
+function initializeDecipher(
+	key: Utf8,
+	algorithm = DEFAULT_ENCRYPTION_ALGORITHM,
+) {
 	return forge.cipher.createDecipher(algorithm, key)
 }
 
-function encryptFromStringToString(
-	data: string,
-	key: string,
-	options?: Partial<EncryptOptions>,
-) {
-	const {
-		algorithm = DEFAULT_ALGORITHM,
-		ivBytes = DEFAULT_IV_BYTES,
-		tagBytes = DEFAULT_TAG_BYTES,
-	} = options || {}
-
-	const iv = generateIvString(ivBytes)
-
-	const cipher = createCipher(key, algorithm)
-
-	cipher.start({ iv, tagLength: tagBytes })
-
-	cipher.update(forge.util.createBuffer(data, 'utf8'))
-
-	const success = cipher.finish()
-
-	if (!success) {
-		throw new Error('Encryption failed or data is corrupted.')
-	}
-
-	const tag = cipher.mode.tag.bytes()
-
-	return {
-		iv,
-		tag,
-		data: cipher.output.getBytes(),
-	}
-}
-
-function encryptFromStringToUint8Array(
-	data: string,
-	key: string,
-	options?: Partial<EncryptOptions>,
-) {
-	const encrypted = encryptFromStringToString(data, key, options)
-
-	return {
-		iv: utils.stringToUint8Array(encrypted.iv),
-		tag: utils.stringToUint8Array(encrypted.tag),
-		data: utils.stringToUint8Array(encrypted.data),
-	}
-}
-
-function encryptFromStringToHex(
-	data: string,
-	key: string,
-	options?: Partial<EncryptOptions>,
-) {
-	const encrypted = encryptFromStringToString(data, key, options)
-
-	return {
-		iv: utils.stringToHex(encrypted.iv),
-		tag: utils.stringToHex(encrypted.tag),
-		data: utils.stringToHex(encrypted.data),
-	}
-}
-
-function encryptFromUint8ArrayToString(
-	data: Uint8Array,
-	key: Uint8Array,
-	options?: Partial<EncryptOptions>,
-) {
-	return encryptFromStringToString(
-		utils.uint8ArrayToString(data),
-		utils.uint8ArrayToString(key),
-		options,
-	)
-}
-
-function encryptFromUint8ArrayToUint8Array(
-	data: Uint8Array,
-	key: Uint8Array,
-	options?: Partial<EncryptOptions>,
-) {
-	return encryptFromStringToUint8Array(
-		utils.uint8ArrayToString(data),
-		utils.uint8ArrayToString(key),
-		options,
-	)
-}
-
-function encryptFromUint8ArrayToHex(
-	data: Uint8Array,
-	key: Uint8Array,
-	options?: Partial<EncryptOptions>,
-) {
-	return encryptFromStringToHex(
-		utils.uint8ArrayToString(data),
-		utils.uint8ArrayToString(key),
-		options,
-	)
-}
-
-const encrypt = {
-	fromString: {
-		toString: encryptFromStringToString,
-		toUint8Array: encryptFromStringToUint8Array,
-		toHex: encryptFromStringToHex,
-	},
-	fromUint8Array: {
-		toString: encryptFromUint8ArrayToString,
-		toUint8Array: encryptFromUint8ArrayToUint8Array,
-		toHex: encryptFromUint8ArrayToHex,
-	},
-}
-
-function decryptFromStringToString(
-	data: string,
-	key: string,
+// Encode encrypted data output
+function encodeData(
 	iv: string,
-	tag: string,
-	options?: Partial<DecryptOptions>,
+	authTag: string,
+	data: string,
+	format: OutputEncoding,
 ) {
-	const { algorithm = DEFAULT_ALGORITHM } = options || {}
+	const combined = iv + authTag + data
+	switch (format) {
+		case 'hex':
+			return forge.util.bytesToHex(combined)
+		case 'base64':
+			return forge.util.encode64(combined)
+		default:
+			throw new Error(`Unsupported output format: ${format}`)
+	}
+}
 
-	const decipher = createDecipher(key, algorithm)
+// Decode encrypted data for decryption
+function decodeData(
+	encodedData: string,
+	format: Exclude<InputEncoding, Utf8Encoding>,
+) {
+	let decodedBytes: string
+	switch (format) {
+		case 'hex':
+			decodedBytes = forge.util.hexToBytes(encodedData)
+			break
+		case 'base64':
+			decodedBytes = forge.util.decode64(encodedData)
+			break
+		default:
+			throw new Error(`Unsupported input format: ${format}`)
+	}
 
+	return {
+		iv: decodedBytes.slice(0, DEFAULT_IV_SIZE),
+		authTag: decodedBytes.slice(
+			DEFAULT_IV_SIZE,
+			DEFAULT_IV_SIZE + DEFAULT_TAG_SIZE,
+		),
+		cipherText: decodedBytes.slice(DEFAULT_IV_SIZE + DEFAULT_TAG_SIZE),
+	}
+}
+
+// Update cipher with data during encryption based on encoding type
+function updateCipher(
+	data: string,
+	encoding: InputEncoding,
+	cipher: forge.cipher.BlockCipher,
+) {
+	const buffer = (() => {
+		switch (encoding) {
+			case 'utf8':
+				return forge.util.createBuffer(data, 'raw')
+			case 'hex':
+				return forge.util.createBuffer(forge.util.hexToBytes(data))
+			case 'base64':
+				return forge.util.createBuffer(forge.util.decode64(data))
+			default:
+				throw new Error(`Unsupported encoding: ${encoding}`)
+		}
+	})()
+	cipher.update(buffer)
+}
+
+// Encrypt function
+function encrypt<OE extends OutputEncoding = OutputEncoding>(
+	data: string,
+	key: EncryptionKey,
+	options: EncryptionOptions = {},
+): string {
+	const { inputEncoding = 'utf8', outputEncoding = 'base64' as OE } = options
+	const cipher = initializeCipher(key)
+
+	const iv = forge.random.getBytesSync(DEFAULT_IV_SIZE)
+	cipher.start({ iv, tagLength: DEFAULT_TAG_SIZE * 8 })
+
+	updateCipher(data, inputEncoding, cipher)
+
+	if (!cipher.finish()) throw new Error('Encryption failed')
+
+	return encodeData(
+		iv,
+		cipher.mode.tag.getBytes(),
+		cipher.output.getBytes(),
+		outputEncoding,
+	)
+}
+
+// Update decipher with data during decryption
+function updateDecipher(data: forge.Bytes, decipher: forge.cipher.BlockCipher) {
+	const buffer = forge.util.createBuffer(data)
+	decipher.update(buffer)
+}
+
+// Decrypt function
+function decrypt<
+	OE extends DecryptionOutputEncoding = DecryptionOutputEncoding,
+>(
+	data: Base64 | Hex,
+	key: EncryptionKey,
+	options: DecryptionOptions = {},
+): string {
+	const { inputEncoding = 'base64', outputEncoding = 'utf8' as OE } = options
+	const { iv, authTag, cipherText } = decodeData(data, inputEncoding)
+
+	const decipher = initializeDecipher(key)
 	decipher.start({
-		iv: forge.util.createBuffer(iv),
-		tag: forge.util.createBuffer(tag),
+		iv,
+		tagLength: DEFAULT_TAG_SIZE * 8,
+		tag: forge.util.createBuffer(authTag),
 	})
 
-	decipher.update(forge.util.createBuffer(data))
+	updateDecipher(cipherText, decipher)
 
-	const success = decipher.finish()
+	if (!decipher.finish()) throw new Error('Decryption failed')
 
-	const output = decipher.output.getBytes()
+	const decryptedData = decipher.output.getBytes()
 
-	if (!success || output.length === 0) {
-		throw new Error('Decryption failed or data is corrupted.')
+	switch (outputEncoding) {
+		case 'utf8':
+			return forge.util.decodeUtf8(decryptedData)
+		case 'hex':
+			return forge.util.bytesToHex(decryptedData)
+		case 'base64':
+			return forge.util.encode64(decryptedData)
+		default:
+			throw new Error(`Unsupported output encoding: ${outputEncoding}`)
 	}
-
-	return output
 }
 
-function decryptFromStringToUint8Array(
-	data: string,
-	key: string,
-	iv: string,
-	tag: string,
-	options?: Partial<DecryptOptions>,
-) {
-	return utils.stringToUint8Array(
-		decryptFromStringToString(data, key, iv, tag, options),
-	)
-}
-
-function decryptFromStringToHex(
-	data: string,
-	key: string,
-	iv: string,
-	tag: string,
-	options?: Partial<DecryptOptions>,
-) {
-	return utils.stringToHex(
-		decryptFromStringToString(data, key, iv, tag, options),
-	)
-}
-
-function decryptFromUint8ArrayToString(
-	data: Uint8Array,
-	key: Uint8Array,
-	iv: Uint8Array,
-	tag: Uint8Array,
-	options?: Partial<DecryptOptions>,
-) {
-	return decryptFromStringToString(
-		utils.uint8ArrayToString(data),
-		utils.uint8ArrayToString(key),
-		utils.uint8ArrayToString(iv),
-		utils.uint8ArrayToString(tag),
-		options,
-	)
-}
-
-function decryptFromUint8ArrayToUint8Array(
-	data: Uint8Array,
-	key: Uint8Array,
-	iv: Uint8Array,
-	tag: Uint8Array,
-	options?: Partial<DecryptOptions>,
-) {
-	return decryptFromStringToUint8Array(
-		utils.uint8ArrayToString(data),
-		utils.uint8ArrayToString(key),
-		utils.uint8ArrayToString(iv),
-		utils.uint8ArrayToString(tag),
-		options,
-	)
-}
-
-function decryptFromUint8ArrayToHex(
-	data: Uint8Array,
-	key: Uint8Array,
-	iv: Uint8Array,
-	tag: Uint8Array,
-	options?: Partial<DecryptOptions>,
-) {
-	return decryptFromStringToHex(
-		utils.uint8ArrayToString(data),
-		utils.uint8ArrayToString(key),
-		utils.uint8ArrayToString(iv),
-		utils.uint8ArrayToString(tag),
-		options,
-	)
-}
-
-const decrypt = {
-	fromString: {
-		toString: decryptFromStringToString,
-		toUint8Array: decryptFromStringToUint8Array,
-		toHex: decryptFromStringToHex,
-	},
-	fromUint8Array: {
-		toString: decryptFromUint8ArrayToString,
-		toUint8Array: decryptFromUint8ArrayToUint8Array,
-		toHex: decryptFromUint8ArrayToHex,
-	},
-}
-
+// AES library export object
 export const AES = {
-	DEFAULT_IV_BYTES,
-	DEFAULT_ALGORITHM,
-	createCipher,
-	createDecipher,
-	generateIv,
-	generateIvString,
 	encrypt,
 	decrypt,
+	DEFAULT_IV_SIZE,
+	DEFAULT_TAG_SIZE,
+	DEFAULT_ENCRYPTION_ALGORITHM,
 }
