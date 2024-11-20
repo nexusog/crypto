@@ -10,26 +10,42 @@ type OutputEncoding = 'base64' | 'hex'
 type HashInput = Base64 | Hex | Utf8
 type HashOutput = Base64 | Hex
 
-interface HashOptions<
-	IE extends InputEncoding = InputEncoding,
-	OE extends OutputEncoding = OutputEncoding,
-> {
-	inputEncoding: IE
-	outputEncoding: OE
-}
+// Define HashOptions using generics and `type`
+type HashOptions<
+	R extends boolean = false,
+	IE extends InputEncoding = 'utf8',
+	OE extends OutputEncoding = 'hex',
+> = R extends true
+	? { raw: true; inputEncoding?: IE }
+	: { raw?: false; inputEncoding?: IE; outputEncoding?: OE }
 
-// Overloads for the `hash` function to provide type-safe return values based on output encoding
-function hash(data: HashInput): string
-function hash(
-	data: string,
-	options: Partial<HashOptions<InputEncoding, 'base64'>>,
-): Base64
-function hash(data: HashInput, options: HashOptions<InputEncoding, 'hex'>): Hex
+// Overloads for the `hash` function using generics
+function hash<R extends true, IE extends InputEncoding>(
+	data: HashInput,
+	options: HashOptions<R, IE>,
+): forge.md.MessageDigest
 
-function hash(data: HashInput, options?: Partial<HashOptions>): HashOutput
+function hash<
+	R extends false | undefined,
+	IE extends InputEncoding,
+	OE extends OutputEncoding,
+>(
+	data: HashInput,
+	options?: HashOptions<R extends undefined ? false : R, IE, OE>,
+): HashOutput
 
-function hash(data: HashInput, options: Partial<HashOptions> = {}): HashOutput {
-	const { inputEncoding = 'utf8', outputEncoding = 'hex' } = options
+// Implementation
+function hash<
+	R extends boolean = false,
+	IE extends InputEncoding = 'utf8',
+	OE extends OutputEncoding = 'hex',
+>(
+	data: HashInput,
+	options?: HashOptions<R, IE, OE>,
+): R extends true ? forge.md.MessageDigest : HashOutput {
+	const { inputEncoding = 'utf8' } = options || {}
+	const raw = options?.raw === true
+	const outputEncoding = raw ? undefined : options?.outputEncoding || 'hex'
 
 	const md = createInstance()
 
@@ -52,14 +68,19 @@ function hash(data: HashInput, options: Partial<HashOptions> = {}): HashOutput {
 			throw new Error(`Unsupported input encoding: ${inputEncoding}`)
 	}
 
+	if (raw) {
+		// Return the MessageDigest instance before calculating the output
+		return md as any
+	}
+
 	// Generate the hash and convert it to the desired output encoding
 	const output = md.digest().getBytes()
 
 	switch (outputEncoding) {
 		case 'hex':
-			return forge.util.bytesToHex(output)
+			return forge.util.bytesToHex(output) as any
 		case 'base64':
-			return forge.util.encode64(output)
+			return forge.util.encode64(output) as any
 		default:
 			throw new Error(`Unsupported output encoding: ${outputEncoding}`)
 	}

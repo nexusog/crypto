@@ -1,3 +1,4 @@
+import { Base64Encoding, HexEncoding, Utf8Encoding } from '@/types'
 import { utils } from '@/utils'
 import forge, { Base64, Hex, Utf8 } from 'node-forge'
 
@@ -5,11 +6,6 @@ import forge, { Base64, Hex, Utf8 } from 'node-forge'
 const DEFAULT_IV_SIZE = 16
 const DEFAULT_TAG_SIZE = 16
 const DEFAULT_ENCRYPTION_ALGORITHM: forge.cipher.Algorithm = 'AES-GCM'
-
-// Encoding Types
-type Utf8Encoding = 'utf8'
-type Base64Encoding = 'base64'
-type HexEncoding = 'hex'
 
 // Consolidated Encoding Type Aliases
 type InputEncoding = Utf8Encoding | Base64Encoding | HexEncoding
