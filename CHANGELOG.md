@@ -1,6 +1,6 @@
 # @nexusog/crypto
 
-## 0.0.0-next-20241120190155
+## 0.4.0-next-20241120190155
 
 ### Minor Changes
 
