@@ -1,22 +1,17 @@
 import { Base64Encoding, HexEncoding, Utf8Encoding } from '@/types'
-import { utils } from '@/utils'
 import forge, { Base64, Hex, Utf8 } from 'node-forge'
 
-// Default configurations for encryption
 const DEFAULT_IV_SIZE = 16
 const DEFAULT_TAG_SIZE = 16
 const DEFAULT_ENCRYPTION_ALGORITHM: forge.cipher.Algorithm = 'AES-GCM'
 
-// Consolidated Encoding Type Aliases
 type InputEncoding = Utf8Encoding | Base64Encoding | HexEncoding
 type OutputEncoding = Base64Encoding | HexEncoding
 type DecryptionInputEncoding = OutputEncoding
 type DecryptionOutputEncoding = Utf8Encoding | Base64Encoding | HexEncoding
 
-// Encryption Key Type
 type EncryptionKey = Utf8
 
-// Separate options for Encryption and Decryption
 type EncryptionOptions = {
 	inputEncoding?: InputEncoding
 	outputEncoding?: OutputEncoding
@@ -27,12 +22,10 @@ type DecryptionOptions = {
 	outputEncoding?: DecryptionOutputEncoding
 }
 
-// Initialize AES cipher for encryption
 function initializeCipher(key: Utf8, algorithm = DEFAULT_ENCRYPTION_ALGORITHM) {
 	return forge.cipher.createCipher(algorithm, key)
 }
 
-// Initialize AES decipher for decryption
 function initializeDecipher(
 	key: Utf8,
 	algorithm = DEFAULT_ENCRYPTION_ALGORITHM,
@@ -40,7 +33,6 @@ function initializeDecipher(
 	return forge.cipher.createDecipher(algorithm, key)
 }
 
-// Encode encrypted data output
 function encodeData(
 	iv: string,
 	authTag: string,
@@ -58,7 +50,6 @@ function encodeData(
 	}
 }
 
-// Decode encrypted data for decryption
 function decodeData(
 	encodedData: string,
 	format: Exclude<InputEncoding, Utf8Encoding>,
@@ -85,7 +76,6 @@ function decodeData(
 	}
 }
 
-// Update cipher with data during encryption based on encoding type
 function updateCipher(
 	data: string,
 	encoding: InputEncoding,
@@ -130,7 +120,6 @@ function encrypt<OE extends OutputEncoding = OutputEncoding>(
 	)
 }
 
-// Update decipher with data during decryption
 function updateDecipher(data: forge.Bytes, decipher: forge.cipher.BlockCipher) {
 	const buffer = forge.util.createBuffer(data)
 	decipher.update(buffer)
@@ -172,7 +161,6 @@ function decrypt<
 	}
 }
 
-// AES library export object
 export const AES = {
 	encrypt,
 	decrypt,

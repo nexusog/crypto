@@ -10,7 +10,6 @@ type OutputEncoding = 'base64' | 'hex'
 type HashInput = Base64 | Hex | Utf8
 type HashOutput = Base64 | Hex
 
-// Define HashOptions using generics and `type`
 type HashOptions<
 	R extends boolean = false,
 	IE extends InputEncoding = 'utf8',
@@ -19,7 +18,6 @@ type HashOptions<
 	? { raw: true; inputEncoding?: IE }
 	: { raw?: false; inputEncoding?: IE; outputEncoding?: OE }
 
-// Overloads for the `hash` function using generics
 function hash<R extends true, IE extends InputEncoding>(
 	data: HashInput,
 	options: HashOptions<R, IE>,
@@ -53,7 +51,6 @@ function hash<
 		throw new Error('Invalid input: data should be a string')
 	}
 
-	// Update the hash instance with data based on input encoding
 	switch (inputEncoding) {
 		case 'utf8':
 			md.update(forge.util.decodeUtf8(data), 'raw')
@@ -69,11 +66,9 @@ function hash<
 	}
 
 	if (raw) {
-		// Return the MessageDigest instance before calculating the output
 		return md as any
 	}
 
-	// Generate the hash and convert it to the desired output encoding
 	const output = md.digest().getBytes()
 
 	switch (outputEncoding) {
