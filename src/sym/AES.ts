@@ -33,6 +33,8 @@ function initializeDecipher(
 	return forge.cipher.createDecipher(algorithm, key)
 }
 
+// encodes data into a given format
+// iv + authTag + data
 function encodeData(
 	iv: string,
 	authTag: string,
@@ -50,6 +52,7 @@ function encodeData(
 	}
 }
 
+// decodes data from a given format and returns separated iv, authTag and cipherText
 function decodeData(
 	encodedData: string,
 	format: Exclude<InputEncoding, Utf8Encoding>,
@@ -106,7 +109,7 @@ function encrypt<OE extends OutputEncoding = OutputEncoding>(
 	const cipher = initializeCipher(key)
 
 	const iv = forge.random.getBytesSync(DEFAULT_IV_SIZE)
-	cipher.start({ iv, tagLength: DEFAULT_TAG_SIZE * 8 })
+	cipher.start({ iv, tagLength: DEFAULT_TAG_SIZE * 8 /* TAG_SIZE_IN_BITS */ })
 
 	updateCipher(data, inputEncoding, cipher)
 
@@ -139,7 +142,7 @@ function decrypt<
 	const decipher = initializeDecipher(key)
 	decipher.start({
 		iv,
-		tagLength: DEFAULT_TAG_SIZE * 8,
+		tagLength: DEFAULT_TAG_SIZE * 8 /* TAG_SIZE_IN_BITS */,
 		tag: forge.util.createBuffer(authTag),
 	})
 
