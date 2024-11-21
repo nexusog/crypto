@@ -1,19 +1,20 @@
+import { Base64Encoding, HexEncoding, Utf8Encoding } from '@/types'
 import forge, { Base64, Hex, Utf8 } from 'node-forge'
 
 function createInstance() {
 	return forge.md.sha256.create()
 }
 
-type InputEncoding = 'utf8' | 'base64' | 'hex'
-type OutputEncoding = 'base64' | 'hex'
+type InputEncoding = Utf8Encoding | Base64Encoding | HexEncoding
+type OutputEncoding = Base64Encoding | HexEncoding
 
 type HashInput = Base64 | Hex | Utf8
 type HashOutput = Base64 | Hex
 
 type HashOptions<
 	R extends boolean = false,
-	IE extends InputEncoding = 'utf8',
-	OE extends OutputEncoding = 'hex',
+	IE extends InputEncoding = Utf8Encoding,
+	OE extends OutputEncoding = HexEncoding,
 > = R extends true
 	? { raw: true; inputEncoding?: IE }
 	: { raw?: false; inputEncoding?: IE; outputEncoding?: OE }
@@ -35,12 +36,12 @@ function hash<
 // Implementation
 function hash<
 	R extends boolean = false,
-	IE extends InputEncoding = 'utf8',
-	OE extends OutputEncoding = 'hex',
+	IE extends InputEncoding = Utf8Encoding,
+	OE extends OutputEncoding = HexEncoding,
 >(
 	data: HashInput,
 	options?: HashOptions<R, IE, OE>,
-): R extends true ? forge.md.MessageDigest : HashOutput {
+): forge.md.MessageDigest | HashOutput {
 	const { inputEncoding = 'utf8' } = options || {}
 	const raw = options?.raw === true
 	const outputEncoding = raw ? undefined : options?.outputEncoding || 'hex'
@@ -65,8 +66,9 @@ function hash<
 			throw new Error(`Unsupported input encoding: ${inputEncoding}`)
 	}
 
+	// if raw is true, return the MessageDigest instance
 	if (raw) {
-		return md as any
+		return md
 	}
 
 	const output = md.digest().getBytes()
