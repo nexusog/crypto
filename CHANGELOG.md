@@ -1,5 +1,11 @@
 # @nexusog/crypto
 
+## 1.0.0-alpha.1
+
+### Patch Changes
+
+-   Fix incorrect entry file path
+
 ## 1.0.0-alpha.0
 
 ### Major Changes
