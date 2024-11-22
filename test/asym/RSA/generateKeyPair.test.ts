@@ -1,8 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, test } from 'vitest'
 import NexusCrypto from '@/index'
 
 describe('RSA.generateKeyPair', () => {
-	it('should return a key pair', () => {
+	test('should return a key pair', () => {
 		const keyPair = NexusCrypto.RSA.generateKeyPair()
 
 		expect(keyPair).toBeDefined()
@@ -14,7 +14,7 @@ describe('RSA.generateKeyPair', () => {
 		expect(keyPair.publicKey).toBeTypeOf('object')
 	})
 
-	it('should return a key pair with custom bits', () => {
+	test('should return a key pair with custom bits', () => {
 		const bits = 4096
 		const keyPair = NexusCrypto.RSA.generateKeyPair(bits)
 

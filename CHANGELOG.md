@@ -1,5 +1,17 @@
 # @nexusog/crypto
 
+## 1.0.0-alpha.0
+
+### Major Changes
+
+-   Finalize stable API
+
+## 0.4.0-next-20241120190155
+
+### Minor Changes
+
+-   9f9f526: More Stable API & internal refactors
+
 ## 0.3.0
 
 ### Minor Changes

@@ -1,0 +1,8 @@
+{
+	"mode": "pre",
+	"tag": "alpha",
+	"initialVersions": {
+		"@nexusog/crypto": "0.4.0-next-20241120190155"
+	},
+	"changesets": ["loud-toys-raise"]
+}

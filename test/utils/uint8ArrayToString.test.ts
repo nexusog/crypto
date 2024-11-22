@@ -9,7 +9,6 @@ describe('uint8ArrayToString', () => {
 
 		expect(simpleTest).toBeDefined()
 		expect(simpleTest.length).toBe(5)
-		expect(simpleTest[0]).toBe('H')
-		expect(simpleTest[4]).toBe('o')
+		expect(simpleTest).toStrictEqual('Hello')
 	})
 })

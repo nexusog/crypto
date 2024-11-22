@@ -1,53 +1,89 @@
-import { utils } from '@/utils'
-import forge from 'node-forge'
+import { Base64Encoding, HexEncoding, Utf8Encoding } from '@/types'
+import forge, { Base64, Hex, Utf8 } from 'node-forge'
 
 function createInstance() {
 	return forge.md.sha256.create()
 }
 
-function digest(data: string) {
-	return createInstance().update(data, 'utf8').digest()
-}
+type InputEncoding = Utf8Encoding | Base64Encoding | HexEncoding
+type OutputEncoding = Base64Encoding | HexEncoding
 
-function fromStringToHex(data: string): string {
-	return digest(data).toHex()
-}
+type HashInput = Base64 | Hex | Utf8
+type HashOutput = Base64 | Hex
 
-function fromStringToString(data: string): string {
-	return digest(data).bytes()
-}
+type HashOptions<
+	R extends boolean = false,
+	IE extends InputEncoding = Utf8Encoding,
+	OE extends OutputEncoding = HexEncoding,
+> = R extends true
+	? { raw: true; inputEncoding?: IE }
+	: { raw?: false; inputEncoding?: IE; outputEncoding?: OE }
 
-function fromStringToUint8Array(data: string): Uint8Array {
-	return utils.stringToUint8Array(fromStringToString(data))
-}
+function hash<R extends true, IE extends InputEncoding>(
+	data: HashInput,
+	options: HashOptions<R, IE>,
+): forge.md.MessageDigest
 
-const fromString = {
-	toHex: fromStringToHex,
-	toString: fromStringToString,
-	toUint8Array: fromStringToUint8Array,
-}
+function hash<
+	R extends false | undefined,
+	IE extends InputEncoding,
+	OE extends OutputEncoding,
+>(
+	data: HashInput,
+	options?: HashOptions<R extends undefined ? false : R, IE, OE>,
+): HashOutput
 
-function fromUint8ArrayToHex(data: Uint8Array): string {
-	return fromStringToHex(utils.uint8ArrayToString(data))
-}
+// Implementation
+function hash<
+	R extends boolean = false,
+	IE extends InputEncoding = Utf8Encoding,
+	OE extends OutputEncoding = HexEncoding,
+>(
+	data: HashInput,
+	options?: HashOptions<R, IE, OE>,
+): forge.md.MessageDigest | HashOutput {
+	const { inputEncoding = 'utf8' } = options || {}
+	const raw = options?.raw === true
+	const outputEncoding = raw ? undefined : options?.outputEncoding || 'hex'
 
-function fromUint8ArrayToString(data: Uint8Array): string {
-	return fromStringToString(utils.uint8ArrayToString(data))
-}
+	const md = createInstance()
 
-function fromUint8ArrayToUint8Array(data: Uint8Array): Uint8Array {
-	return fromStringToUint8Array(utils.uint8ArrayToString(data))
-}
+	if (typeof data !== 'string') {
+		throw new Error('Invalid input: data should be a string')
+	}
 
-const fromUint8Array = {
-	toHex: fromUint8ArrayToHex,
-	toString: fromUint8ArrayToString,
-	toUint8Array: fromUint8ArrayToUint8Array,
+	switch (inputEncoding) {
+		case 'utf8':
+			md.update(forge.util.decodeUtf8(data), 'raw')
+			break
+		case 'hex':
+			md.update(forge.util.hexToBytes(data))
+			break
+		case 'base64':
+			md.update(forge.util.decode64(data))
+			break
+		default:
+			throw new Error(`Unsupported input encoding: ${inputEncoding}`)
+	}
+
+	// if raw is true, return the MessageDigest instance
+	if (raw) {
+		return md
+	}
+
+	const output = md.digest().getBytes()
+
+	switch (outputEncoding) {
+		case 'hex':
+			return forge.util.bytesToHex(output) as any
+		case 'base64':
+			return forge.util.encode64(output) as any
+		default:
+			throw new Error(`Unsupported output encoding: ${outputEncoding}`)
+	}
 }
 
 export const SHA256 = {
 	createInstance,
-	digest,
-	fromString,
-	fromUint8Array,
+	hash,
 }

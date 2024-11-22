@@ -1,7 +1,7 @@
 {
 	"private": false,
 	"name": "@nexusog/crypto",
-	"version": "0.3.0",
+	"version": "1.0.0-alpha.0",
 	"description": "Browser & Natively supported cryptography methods",
 	"type": "module",
 	"main": "dist/index.js",
@@ -17,7 +17,8 @@
 		"bump": "pnpm changeset",
 		"cs:version": "pnpm changeset version",
 		"cs:version:snapshot": "pnpm changeset version --snapshot next",
-		"cs:publish": "pnpm run build && changeset publish"
+		"cs:publish": "pnpm run build && changeset publish",
+		"cs:publish:snapshot": "pnpm run build && changeset publish --tag next"
 	},
 	"keywords": [
 		"crypto"

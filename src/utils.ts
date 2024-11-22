@@ -1,45 +1,51 @@
 import forge from 'node-forge'
 
-function stringToUint8Array(str: string, max?: number): Uint8Array {
-	return new TextEncoder().encode(str).slice(0, max)
+function stringToUint8Array(str: string): Uint8Array {
+	const arr = new Uint8Array(str.length)
+	for (let i = 0; i < str.length; i++) {
+		arr[i] = str.charCodeAt(i)
+	}
+	return arr
 }
 
-function uint8ArrayToString(uint8Array: Uint8Array, max?: number): string {
-	return new TextDecoder().decode(uint8Array).slice(0, max)
+function uint8ArrayToString(uint8Array: Uint8Array): string {
+	return String.fromCharCode(...uint8Array)
 }
 
-// returns a random string of the specified length in hex format
-function getRandomString(bytes: number) {
-	return stringToHex(forge.random.getBytesSync(bytes)).slice(0, bytes)
+function getRandomUint8Array(bytes: number): Uint8Array {
+	return Uint8Array.from(forge.random.getBytesSync(bytes), (c) =>
+		c.charCodeAt(0),
+	)
 }
 
-function getRandomUint8Array(bytes: number) {
-	return stringToUint8Array(getRandomString(bytes), bytes)
+function getRandomHex(bytes: number): string {
+	return uint8ArrayToHex(getRandomUint8Array(bytes))
 }
 
 function uint8ArrayToHex(uint8Array: Uint8Array): string {
-	return stringToHex(uint8ArrayToString(uint8Array))
-}
-
-function stringToHex(str: string): string {
-	return forge.util.bytesToHex(str)
-}
-
-function hexToString(hex: string): string {
-	return forge.util.hexToBytes(hex)
+	let hex = ''
+	for (const byte of uint8Array) {
+		hex += byte.toString(16).padStart(2, '0')
+	}
+	return hex
 }
 
 function hexToUint8Array(hex: string): Uint8Array {
-	return stringToUint8Array(hexToString(hex))
+	if (hex.length % 2 !== 0) {
+		throw new Error('Invalid hex string')
+	}
+	const array = new Uint8Array(hex.length / 2)
+	for (let i = 0; i < hex.length; i += 2) {
+		array[i / 2] = parseInt(hex.substr(i, 2), 16)
+	}
+	return array
 }
 
 export const utils = {
 	stringToUint8Array,
-	getRandomString,
-	getRandomUint8Array,
 	uint8ArrayToString,
 	uint8ArrayToHex,
-	stringToHex,
-	hexToString,
+	getRandomUint8Array,
+	getRandomHex,
 	hexToUint8Array,
 }

@@ -7,7 +7,8 @@ describe('stringToUint8Array', () => {
 
 		expect(simpleTest).toBeDefined()
 		expect(simpleTest.length).toBe(5)
-		expect(simpleTest[0]).toBe(72)
-		expect(simpleTest[4]).toBe(111)
+		expect(simpleTest).toStrictEqual(
+			new Uint8Array([72, 101, 108, 108, 111]),
+		)
 	})
 })

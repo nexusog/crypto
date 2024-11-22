@@ -1,25 +1,43 @@
 import { SHA256 } from '@/hashing/sha256'
-import { utils } from '@/utils'
+import { Base64Encoding, HexEncoding, Utf8Encoding } from '@/types'
 import forge from 'node-forge'
 
 const DEFAULT_KEY_PAIR_BITS: number = 2048
 const DEFAULT_ENCRYPTION_SCHEME: forge.pki.rsa.EncryptionScheme = 'RSA-OAEP'
+const DEFAULT_SIGNATURE_SCHEME: forge.pki.rsa.SignatureScheme =
+	'RSASSA-PKCS1-V1_5'
 const DEFAULT_ENCODING: forge.Encoding = 'raw'
 
+type EncryptionInputEncoding = Utf8Encoding | Base64Encoding | HexEncoding
+type EncryptionOutputEncoding = Base64Encoding | HexEncoding
+
 type EncryptionOptions = {
-	scheme: forge.pki.rsa.EncryptionScheme
+	inputEncoding?: EncryptionInputEncoding
+	outputEncoding?: EncryptionOutputEncoding
 }
+
+type DecryptionInputEncoding = EncryptionOutputEncoding
+type DecryptionOutputEncoding = EncryptionInputEncoding
 
 type DecryptionOptions = {
-	scheme: forge.pki.rsa.EncryptionScheme
+	inputEncoding?: DecryptionInputEncoding
+	outputEncoding?: DecryptionOutputEncoding
 }
+
+type SigningInputEncoding = Utf8Encoding | Base64Encoding | HexEncoding
+type SigningOutputEncoding = Base64Encoding | HexEncoding
 
 type SigningOptions = {
-	encoding: forge.Encoding
+	inputEncoding?: SigningInputEncoding
+	outputEncoding?: SigningOutputEncoding
 }
 
-type VerifySigningOptions = {
-	encoding: forge.Encoding
+type VerifyingSignatureEncoding = Base64Encoding | HexEncoding
+type VerifyingDataEncoding = Utf8Encoding | Base64Encoding | HexEncoding
+
+type VerifyingOptions = {
+	signatureEncoding?: VerifyingSignatureEncoding
+	dataEncoding?: VerifyingDataEncoding
 }
 
 function generateKeyPair(bits = DEFAULT_KEY_PAIR_BITS) {
@@ -34,286 +52,147 @@ function generateKeyPairPEM(bits = DEFAULT_KEY_PAIR_BITS) {
 	}
 }
 
-function encryptFromStringToString(
-	publicKeyPEM: string,
+function encrypt(
 	data: string,
-	options?: Partial<EncryptionOptions>,
-) {
-	const { scheme = DEFAULT_ENCRYPTION_SCHEME } = options || {}
-
-	const rsaPublicKey = forge.pki.publicKeyFromPem(publicKeyPEM)
-
-	return rsaPublicKey.encrypt(data, scheme, {
-		md: SHA256.createInstance(),
-		mgf1: forge.mgf.mgf1.create(SHA256.createInstance()),
-	})
-}
-
-function encryptFromStringToUint8Array(
-	publicKeyPEM: string,
-	data: string,
-	options?: Partial<EncryptionOptions>,
-) {
-	return utils.stringToUint8Array(
-		encryptFromStringToString(publicKeyPEM, data, options),
-	)
-}
-
-function encryptFromStringToHex(
-	publicKeyPEM: string,
-	data: string,
-	options?: Partial<EncryptionOptions>,
-) {
-	return utils.stringToHex(
-		encryptFromStringToString(publicKeyPEM, data, options),
-	)
-}
-
-function encryptFromUint8ArrayToString(
-	publicKeyPEM: string,
-	data: Uint8Array,
-	options?: Partial<EncryptionOptions>,
+	publicKeyPem: string,
+	options: EncryptionOptions = {},
 ): string {
-	return encryptFromStringToString(
-		publicKeyPEM,
-		utils.uint8ArrayToString(data),
-		options,
-	)
+	const { inputEncoding = 'utf8', outputEncoding = 'base64' } = options
+
+	const rsaPublicKey = forge.pki.publicKeyFromPem(publicKeyPem)
+
+	let output: string
+
+	switch (inputEncoding) {
+		case 'utf8':
+			output = rsaPublicKey.encrypt(data, DEFAULT_ENCRYPTION_SCHEME)
+			break
+		case 'base64':
+			output = rsaPublicKey.encrypt(
+				forge.util.decode64(data),
+				DEFAULT_ENCRYPTION_SCHEME,
+			)
+			break
+		case 'hex':
+			output = rsaPublicKey.encrypt(
+				forge.util.hexToBytes(data),
+				DEFAULT_ENCRYPTION_SCHEME,
+			)
+			break
+		default:
+			throw new Error(`Unsupported input encoding: ${inputEncoding}`)
+	}
+
+	switch (outputEncoding) {
+		case 'base64':
+			return forge.util.encode64(output)
+		case 'hex':
+			return forge.util.bytesToHex(output)
+		default:
+			throw new Error(`Unsupported output encoding: ${outputEncoding}`)
+	}
 }
 
-function encryptFromUint8ArrayToUint8Array(
-	publicKeyPEM: string,
-	data: Uint8Array,
-	options?: Partial<EncryptionOptions>,
+function decrypt(
+	data: string,
+	privateKeyPem: string,
+	options: DecryptionOptions,
 ) {
-	return encryptFromStringToUint8Array(
-		publicKeyPEM,
-		utils.uint8ArrayToString(data),
-		options,
-	)
+	const { inputEncoding = 'base64', outputEncoding = 'utf8' } = options
+
+	const rsaPrivateKey = forge.pki.privateKeyFromPem(privateKeyPem)
+
+	let output: string
+
+	switch (inputEncoding) {
+		case 'base64':
+			output = rsaPrivateKey.decrypt(
+				forge.util.decode64(data),
+				DEFAULT_ENCRYPTION_SCHEME,
+			)
+			break
+		case 'hex':
+			output = rsaPrivateKey.decrypt(
+				forge.util.hexToBytes(data),
+				DEFAULT_ENCRYPTION_SCHEME,
+			)
+			break
+		default:
+			throw new Error(`Unsupported input encoding: ${inputEncoding}`)
+	}
+
+	switch (outputEncoding) {
+		case 'base64':
+			return forge.util.encode64(output)
+		case 'hex':
+			return forge.util.bytesToHex(output)
+		case 'utf8':
+			return forge.util.decodeUtf8(output)
+		default:
+			throw new Error(`Unsupported output encoding: ${outputEncoding}`)
+	}
 }
 
-function encryptFromUint8ArrayToHex(
-	publicKeyPEM: string,
-	data: Uint8Array,
-	options?: Partial<EncryptionOptions>,
+function sign(
+	data: string,
+	privateKeyPem: string,
+	options: SigningOptions = {},
 ) {
-	return encryptFromStringToHex(
-		publicKeyPEM,
-		utils.uint8ArrayToString(data),
-		options,
-	)
-}
+	const { inputEncoding = 'utf8', outputEncoding = 'base64' } = options
 
-const encrypt = {
-	fromString: {
-		toString: encryptFromStringToString,
-		toUint8Array: encryptFromStringToUint8Array,
-		toHex: encryptFromStringToHex,
-	},
-	fromUint8Array: {
-		toString: encryptFromUint8ArrayToString,
-		toUint8Array: encryptFromUint8ArrayToUint8Array,
-		toHex: encryptFromUint8ArrayToHex,
-	},
-}
+	const rsaPrivateKey = forge.pki.privateKeyFromPem(privateKeyPem)
 
-function decryptFromStringToString(
-	privateKeyPEM: string,
-	encrypted: string,
-	options?: Partial<DecryptionOptions>,
-) {
-	const { scheme = DEFAULT_ENCRYPTION_SCHEME } = options || {}
-
-	const rsaPrivateKey = forge.pki.privateKeyFromPem(privateKeyPEM)
-
-	return rsaPrivateKey.decrypt(encrypted, scheme, {
-		md: SHA256.createInstance(),
-		mgf1: forge.mgf.mgf1.create(SHA256.createInstance()),
+	const md = SHA256.hash(data, {
+		inputEncoding,
+		raw: true,
 	})
+
+	const signature = rsaPrivateKey.sign(md, DEFAULT_SIGNATURE_SCHEME)
+
+	switch (outputEncoding) {
+		case 'base64':
+			return forge.util.encode64(signature)
+		case 'hex':
+			return forge.util.bytesToHex(signature)
+		default:
+			throw new Error(`Unsupported output encoding: ${outputEncoding}`)
+	}
 }
 
-function decryptFromStringToUint8Array(
-	privateKeyPEM: string,
-	encrypted: string,
-	options?: Partial<DecryptionOptions>,
-) {
-	return utils.stringToUint8Array(
-		decryptFromStringToString(privateKeyPEM, encrypted, options),
-	)
-}
-
-function decryptFromStringToHex(
-	privateKeyPEM: string,
-	encrypted: string,
-	options?: Partial<DecryptionOptions>,
-) {
-	return utils.stringToHex(
-		decryptFromStringToString(privateKeyPEM, encrypted, options),
-	)
-}
-
-function decryptFromUint8ArrayToString(
-	privateKeyPEM: string,
-	encrypted: Uint8Array,
-	options?: Partial<DecryptionOptions>,
-) {
-	return decryptFromStringToString(
-		privateKeyPEM,
-		utils.uint8ArrayToString(encrypted),
-		options,
-	)
-}
-
-function decryptFromUint8ArrayToUint8Array(
-	privateKeyPEM: string,
-	encrypted: Uint8Array,
-	options?: Partial<DecryptionOptions>,
-) {
-	return decryptFromStringToUint8Array(
-		privateKeyPEM,
-		utils.uint8ArrayToString(encrypted),
-		options,
-	)
-}
-
-function decryptFromUint8ArrayToHex(
-	privateKeyPEM: string,
-	encrypted: Uint8Array,
-	options?: Partial<DecryptionOptions>,
-) {
-	return decryptFromStringToHex(
-		privateKeyPEM,
-		utils.uint8ArrayToString(encrypted),
-		options,
-	)
-}
-
-const decrypt = {
-	fromString: {
-		toString: decryptFromStringToString,
-		toUint8Array: decryptFromStringToUint8Array,
-		toHex: decryptFromStringToHex,
-	},
-	fromUint8Array: {
-		toString: decryptFromUint8ArrayToString,
-		toUint8Array: decryptFromUint8ArrayToUint8Array,
-		toHex: decryptFromUint8ArrayToHex,
-	},
-}
-
-function signFromStringToString(
-	privateKeyPEM: string,
-	data: string,
-	options?: Partial<SigningOptions>,
-) {
-	const { encoding = DEFAULT_ENCODING } = options || {}
-	const rsaPrivateKey = forge.pki.privateKeyFromPem(privateKeyPEM)
-	const md = SHA256.createInstance()
-	md.update(data, encoding)
-	return rsaPrivateKey.sign(md)
-}
-
-function signFromStringToUint8Array(
-	privateKeyPEM: string,
-	data: string,
-	options?: Partial<SigningOptions>,
-) {
-	return utils.stringToUint8Array(
-		signFromStringToString(privateKeyPEM, data, options),
-	)
-}
-
-function signFromStringToHex(
-	privateKeyPEM: string,
-	data: string,
-	options?: Partial<SigningOptions>,
-) {
-	return utils.stringToHex(
-		signFromStringToString(privateKeyPEM, data, options),
-	)
-}
-
-function signFromUint8ArrayToString(
-	privateKeyPEM: string,
-	data: Uint8Array,
-	options?: Partial<SigningOptions>,
-) {
-	return signFromStringToString(
-		privateKeyPEM,
-		utils.uint8ArrayToString(data),
-		options,
-	)
-}
-
-function signFromUint8ArrayToUint8Array(
-	privateKeyPEM: string,
-	data: Uint8Array,
-	options?: Partial<SigningOptions>,
-) {
-	return signFromStringToUint8Array(
-		privateKeyPEM,
-		utils.uint8ArrayToString(data),
-		options,
-	)
-}
-
-function signFromUint8ArrayToHex(
-	privateKeyPEM: string,
-	data: Uint8Array,
-	options?: Partial<SigningOptions>,
-) {
-	return signFromStringToHex(
-		privateKeyPEM,
-		utils.uint8ArrayToString(data),
-		options,
-	)
-}
-
-const sign = {
-	fromString: {
-		toString: signFromStringToString,
-		toUint8Array: signFromStringToUint8Array,
-		toHex: signFromStringToHex,
-	},
-	fromUint8Array: {
-		toString: signFromUint8ArrayToString,
-		toUint8Array: signFromUint8ArrayToUint8Array,
-		toHex: signFromUint8ArrayToHex,
-	},
-}
-
-function verifySignFromString(
-	publicKeyPEM: string,
-	data: string,
+function verify(
 	signature: string,
-	options?: Partial<VerifySigningOptions>,
+	data: string,
+	publicKeyPem: string,
+	options: VerifyingOptions = {},
 ) {
-	const { encoding = DEFAULT_ENCODING } = options || {}
+	const { signatureEncoding = 'base64', dataEncoding = 'utf8' } = options
 
-	const rsaPublicKey = forge.pki.publicKeyFromPem(publicKeyPEM)
-	const md = SHA256.createInstance()
-	md.update(data, encoding)
-	return rsaPublicKey.verify(md.digest().bytes(), signature)
-}
+	const rsaPublicKey = forge.pki.publicKeyFromPem(publicKeyPem)
 
-function verifySignFromUint8Array(
-	publicKeyPEM: string,
-	data: Uint8Array,
-	signature: Uint8Array,
-	options?: Partial<VerifySigningOptions>,
-) {
-	return verifySignFromString(
-		publicKeyPEM,
-		utils.uint8ArrayToString(data),
-		utils.uint8ArrayToString(signature),
-		options,
+	let normalizedSignature: string
+
+	switch (signatureEncoding) {
+		case 'base64':
+			normalizedSignature = forge.util.decode64(signature)
+			break
+		case 'hex':
+			normalizedSignature = forge.util.hexToBytes(signature)
+			break
+		default:
+			throw new Error(
+				`Unsupported signature encoding: ${signatureEncoding}`,
+			)
+	}
+
+	return rsaPublicKey.verify(
+		SHA256.hash(data, {
+			inputEncoding: dataEncoding,
+			raw: true,
+		})
+			.digest()
+			.bytes(),
+		normalizedSignature,
 	)
-}
-
-const verifySign = {
-	fromString: verifySignFromString,
-	fromUint8Array: verifySignFromUint8Array,
 }
 
 export const RSA = {
@@ -325,5 +204,5 @@ export const RSA = {
 	encrypt,
 	decrypt,
 	sign,
-	verifySign,
+	verify,
 }

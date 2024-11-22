@@ -1,8 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, test } from 'vitest'
 import NexusCrypto from '@/index'
 
 describe('RSA.generateKeyPairPEM', () => {
-	it('should return a key pair', () => {
+	test('should return a key pair', () => {
 		const keyPair = NexusCrypto.RSA.generateKeyPairPEM()
 
 		expect(keyPair).toBeDefined()
@@ -20,7 +20,7 @@ describe('RSA.generateKeyPairPEM', () => {
 		)
 	})
 
-	it('should return a key pair with custom bits', () => {
+	test('should return a key pair with custom bits', () => {
 		const bits = 4096
 		const keyPair = NexusCrypto.RSA.generateKeyPairPEM(bits)
 

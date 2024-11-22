@@ -7,7 +7,9 @@ describe('getRandomUint8Array', () => {
 
 		expect(simpleTest).toBeDefined()
 		expect(simpleTest.length).toBe(5)
-		expect(simpleTest[0]).toBeGreaterThanOrEqual(0)
-		expect(simpleTest[0]).toBeLessThanOrEqual(256)
+		for (let c of simpleTest) {
+			expect(c).toBeGreaterThanOrEqual(0)
+			expect(c).toBeLessThanOrEqual(Math.pow(2, 8))
+		}
 	})
 })
