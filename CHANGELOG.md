@@ -1,5 +1,11 @@
 # @nexusog/crypto
 
+## 1.0.0-alpha.2
+
+### Patch Changes
+
+-   Fix main module file path & add named exports
+
 ## 1.0.0-alpha.1
 
 ### Patch Changes

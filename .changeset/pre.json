@@ -4,5 +4,9 @@
 	"initialVersions": {
 		"@nexusog/crypto": "0.4.0-next-20241120190155"
 	},
-	"changesets": ["fluffy-swans-dance", "loud-toys-raise"]
+	"changesets": [
+		"fluffy-swans-dance",
+		"loud-toys-raise",
+		"strange-humans-serve"
+	]
 }
