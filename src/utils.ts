@@ -1,4 +1,5 @@
 import forge from 'node-forge'
+import { createBuffer } from '@/core/buffer'
 
 function stringToUint8Array(str: string): Uint8Array {
 	const arr = new Uint8Array(str.length)
@@ -48,4 +49,5 @@ export const utils = {
 	getRandomUint8Array,
 	getRandomHex,
 	hexToUint8Array,
+	createBuffer,
 }
