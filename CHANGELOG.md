@@ -1,5 +1,11 @@
 # @nexusog/crypto
 
+## 1.0.0-alpha.3
+
+### Minor Changes
+
+-   Refactor: Introduce NexusBuffer
+
 ## 1.0.0-alpha.2
 
 ### Patch Changes
